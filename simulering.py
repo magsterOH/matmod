@@ -1,14 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-TREE_RADIUS_MEAN = 1
-TREE_RADIUS_VARIATION = 0.5
-
 
 class Tree:
-    def __init__(self) -> None:
+    def __init__(self, tree_radius_mean, tree_radius_variation) -> None:
         self.position = self.random_position(100)
-        self.radius = self.random_radius(mean=TREE_RADIUS_MEAN, variation=TREE_RADIUS_VARIATION)
+        self.radius = self.random_radius(mean=tree_radius_mean, variation=tree_radius_variation)
 
     def random_position(self, size: int) -> np.ndarray:
         return np.random.uniform(-size / 2, size / 2, 2)
@@ -21,6 +18,7 @@ class Tree:
         return np.sqrt(self.position[0] ** 2 + self.position[1] ** 2)
 
     def inside_angle(self, angle: float) -> bool:
+        """angle: vinkel i grader"""
         return self.radius > self.distance * np.tan(np.deg2rad(angle) / 2)
 
     @property
@@ -32,8 +30,8 @@ class Tree:
 
 
 class Forest:
-    def __init__(self, number_of_trees=300) -> None:
-        self.trees = [Tree() for _ in range(number_of_trees)]
+    def __init__(self, number_of_trees=300, tree_radius_mean=1, tree_radius_variation=0.5) -> None:
+        self.trees = [Tree(tree_radius_mean, tree_radius_variation) for _ in range(number_of_trees)]
 
     @property
     def x_positions(self) -> np.ndarray:
@@ -66,22 +64,35 @@ def plot_forest(forest: Forest, angle: float):
 
 
 if __name__ == "__main__":
-    angle = 5
-    forest = Forest(number_of_trees=500)
+    # hitta optimala vinkeln som funkar för olika trädradier
 
-    # testa olika vinklar
-    for angle in range(1, 10):
-        print(f"Vinkel: {angle}, ", end="")
-        print(f"Räknade träd: {sum(forest.counted(angle))}, ", end="")
-        print(f"Total area: {forest.total_area}, ", end="")
-        print(f"area/träd: {forest.total_area/sum(forest.counted(angle))}")
+    variances = np.array([])
+    angles = np.arange(0.5, 5, 0.2)
 
-    angle = 5
+    for angle in angles:
+        ratios = np.array([])
 
-    # testa olika antal träd
-    for trees in range(100, 2000, 100):
-        forest = Forest(number_of_trees=trees)
-        print(f"antal träd: {len(forest.trees)}, ", end="")
-        print(f"area/träd: {forest.total_area/sum(forest.counted(angle))}")
+        for tree_radius in np.arange(0.1, 1, 0.1):
 
-    # plot_forest(forest, angle)
+            print(f"Vinkel: {np.round(angle, 1)}, radie: {np.round(tree_radius, 1)}, ", end=" ")
+
+            forest = Forest(number_of_trees=10000, tree_radius_mean=tree_radius, tree_radius_variation=0)
+            ratio = forest.total_area / sum(forest.counted(angle))
+            # ratio /= 100 * 100
+
+            if ratio != np.inf:
+                ratios = np.append(ratios, ratio)
+
+            print(f"densitet: {ratio}")
+
+        print(f"relative variance: {np.var(ratios) / np.mean(ratios)}", end="\n" * 2)
+        variances = np.append(variances, np.var(ratios) / np.mean(ratios))
+
+    # vinkeln vars "relative variance" är lägst, så att densiteten är så konstant som möjligt för trädradier mellan 0.1 och 0.9
+    best_angle = angles[np.argmin(variances)]
+    print(f"bästa vinkeln är: {np.round(best_angle, 2)}")
+
+    plt.plot(np.arange(0.5, 5, 0.2), variances)
+    plt.xlabel("vinkel")
+    plt.ylabel("relative variance")
+    plt.show()
