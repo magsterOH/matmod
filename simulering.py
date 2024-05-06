@@ -72,7 +72,8 @@ if __name__ == "__main__":
     for angle in angles:
         ratios = np.array([])
 
-        for tree_radius in np.arange(0.1, 1, 0.1):
+        radii = np.arange(0.1, 1, 0.1)
+        for tree_radius in radii:
 
             print(f"Vinkel: {np.round(angle, 1)}, radie: {np.round(tree_radius, 1)}, ", end=" ")
 
@@ -87,12 +88,12 @@ if __name__ == "__main__":
 
         print(f"relative variance: {np.var(ratios) / np.mean(ratios)}", end="\n" * 2)
         variances = np.append(variances, np.var(ratios) / np.mean(ratios))
-
+        plt.plot(radii, ratios)
     # vinkeln vars "relative variance" är lägst, så att densiteten är så konstant som möjligt för trädradier mellan 0.1 och 0.9
     best_angle = angles[np.argmin(variances)]
     print(f"bästa vinkeln är: {np.round(best_angle, 2)}")
 
-    plt.plot(np.arange(0.5, 5, 0.2), variances)
-    plt.xlabel("vinkel")
-    plt.ylabel("relative variance")
+    # plt.plot(np.arange(0.5, 5, 0.2), variances)
+    # plt.xlabel("vinkel")
+    # plt.ylabel("relative variance")
     plt.show()
